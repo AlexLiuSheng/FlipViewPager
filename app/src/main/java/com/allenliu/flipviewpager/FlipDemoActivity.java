@@ -24,14 +24,15 @@ private FlipViewPager viewPager;
     private void init() {
         viewPager= (FlipViewPager) findViewById(R.id.viewpager);
         data=new ArrayList<>();
-        for(int i=0;i<1;i++){
+        for(int i=0;i<2;i++){
             ImageView img=new ImageView(this);
             img.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             img.setImageResource(R.mipmap.ceshi);
             data.add(img);
         }
         adapter=new FlipViewPagerAdapter(data);
-        viewPager.setAdapter(adapter,FlipViewPager.FLIP_RIGHT);
+        viewPager.setAdapter(adapter,FlipViewPager.FLIP_LEFT);
+      //  viewPager.setRotateOffset(100);
         viewPager.setOnFlipOverListener(new IFlipOverListener() {
             @Override
             public void flipOver() {
@@ -40,4 +41,5 @@ private FlipViewPager viewPager;
         });
 
     }
+
 }

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -25,7 +26,7 @@ public class FlipViewPager extends ViewPager {
      * 显示最右边
      */
     public static final int FLIP_RIGHT = 2;
-    private View flipView;
+
     private ImageView imageView;
     private TextView textView;
     private IFlipOverListener listener;
@@ -43,12 +44,6 @@ public class FlipViewPager extends ViewPager {
         super(context, attrs);
         init();
     }
-
-    @Override
-    protected void onPageScrolled(int position, float offset, int offsetPixels) {
-        super.onPageScrolled(position, offset, offsetPixels);
-    }
-
   public void setOnFlipOverListener(IFlipOverListener listener){
       this.listener=listener;
   }
@@ -58,7 +53,6 @@ public class FlipViewPager extends ViewPager {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 PagerAdapter adapter = getAdapter();
-              //  Log.v("position",positionOffset+"");
                 if (adapter instanceof FlipViewPagerAdapter) {
                     if (currentDirection==FLIP_RIGHT&&position == ((FlipViewPagerAdapter) adapter).getData().size() - 2) {
                         if (positionOffsetPixels > rotateOffset) {
@@ -73,20 +67,21 @@ public class FlipViewPager extends ViewPager {
                             textView.setText(getContext().getString(R.string.slide_info));
                             isFlipOver=false;
                         }
-                    }else if(currentDirection==FLIP_LEFT&&position==1){
-//                        if (Math.abs(positionOffsetPixels) > rotateOffset) {
-//                            setCurrentItem(1);
-//                            if(isFlipOver)
-//                                ObjectAnimator.ofFloat(imageView,"rotation",180f).setDuration(0).start();
-//                            textView.setText(getContext().getString(R.string.release_info));
-//                            isFlipOver=true;
-//                        }else{
-//                            float pixels=Math.abs(positionOffsetPixels);
-//                            float rotation=( ((float)pixels/(float) rotateOffset))*180f;
-//                            ObjectAnimator.ofFloat(imageView,"rotation",rotation).setDuration(0).start();
-//                            textView.setText(getContext().getString(R.string.slide_info));
-//                            isFlipOver=false;
-//                        }
+                    }else if(currentDirection==FLIP_LEFT&&position==0){
+                        float pixels=getScreenWidth(getContext())-positionOffsetPixels;
+                        if (pixels >rotateOffset) {
+                            setCurrentItem(1);
+                            if(isFlipOver)
+                                ObjectAnimator.ofFloat(imageView,"rotation",180f).setDuration(0).start();
+                            textView.setText(getContext().getString(R.string.release_info));
+                            isFlipOver=true;
+                        }else{
+
+                            float rotation=( ((float)pixels/(float) rotateOffset))*180f;
+                            ObjectAnimator.ofFloat(imageView,"rotation",rotation).setDuration(0).start();
+                            textView.setText(getContext().getString(R.string.slide_info));
+                            isFlipOver=false;
+                        }
                     }
                 }
             }
@@ -97,7 +92,7 @@ public class FlipViewPager extends ViewPager {
                 if (adapter instanceof FlipViewPagerAdapter) {
                     if (currentDirection==FLIP_RIGHT&&position == ((FlipViewPagerAdapter) adapter).getData().size() - 1) {
                         setCurrentItem(((FlipViewPagerAdapter) adapter).getData().size() - 2);
-                    }else{
+                    }else if(currentDirection==FLIP_LEFT&&position==0){
                         setCurrentItem(1);
                     }
                 }
@@ -105,7 +100,7 @@ public class FlipViewPager extends ViewPager {
 
             @Override
             public void onPageScrollStateChanged(int state) {
-               if(state==2){
+               if(state==SCROLL_STATE_SETTLING){
                    if(isFlipOver){
                        if(listener!=null){
                            listener.flipOver();
@@ -123,40 +118,53 @@ public class FlipViewPager extends ViewPager {
 
     }
     private void addFlipView(int direction) {
-        if(direction==FLIP_RIGHT)
-        flipView = LayoutInflater.from(getContext()).inflate(R.layout.filp_right_layout, null);
-        else
-        flipView=LayoutInflater.from(getContext()).inflate(R.layout.flip_left_layout, null);
-        imageView= (ImageView) flipView.findViewById(R.id.iv_arrow);
-        textView= (TextView) flipView.findViewById(R.id.tv_hint);
-        if(direction==FLIP_LEFT)
-            ObjectAnimator.ofFloat(imageView,"rotation",180f).setDuration(0).start();
-        currentDirection=direction;
-        PagerAdapter adapter = getAdapter();
-        if (adapter instanceof FlipViewPagerAdapter) {
-            FlipViewPagerAdapter fadapter = (FlipViewPagerAdapter) adapter;
-            List<Object> data = fadapter.getData();
+        View flipView;
+          PagerAdapter adapter = getAdapter();
+            if (direction == FLIP_RIGHT)
+                flipView = LayoutInflater.from(getContext()).inflate(R.layout.filp_right_layout, null);
+            else
+                flipView = LayoutInflater.from(getContext()).inflate(R.layout.flip_left_layout, null);
+            imageView = (ImageView) flipView.findViewById(R.id.iv_arrow);
+            textView = (TextView) flipView.findViewById(R.id.tv_hint);
+            //事先将图旋转180
+            if (direction == FLIP_LEFT)
+                ObjectAnimator.ofFloat(imageView, "rotation", 180f).setDuration(0).start();
+            currentDirection = direction;
 
-            if (!data.contains(flipView)&&data.size()>0) {
-                if (direction == FLIP_RIGHT)
-                    data.add(flipView);
-                else if (direction == FLIP_LEFT) {
-                    data.add(0, flipView);
-                    setCurrentItem(1);
+            if (adapter instanceof FlipViewPagerAdapter) {
+                FlipViewPagerAdapter fadapter = (FlipViewPagerAdapter) adapter;
+                List<Object> data = fadapter.getData();
+
+                if (!data.contains(flipView) && data.size() > 0) {
+                    if (direction == FLIP_RIGHT) {
+                        data.add(flipView);
+                        fadapter.setData(data);
+                        fadapter.notifyDataSetChanged();
+                        setCurrentItem(0);
+                    }  else if (direction == FLIP_LEFT) {
+                        data.add(0, flipView);
+                        fadapter.setData(data);
+                        fadapter.notifyDataSetChanged();
+                        setCurrentItem(1);
+                    }
+
                 }
-                fadapter.setData(data);
-                fadapter.notifyDataSetChanged();
             }
-            //   }
-        }
+
     }
 
-
+  public void setRotateOffset(int offset){
+      this.rotateOffset=offset;
+  }
     /**
      * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
      */
     public static int dip2px(Context context, float dpValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);
+    }
+    private float getScreenWidth(Context context){
+        final float scale = context.getResources().getDisplayMetrics().widthPixels;
+        return  scale;
     }
 }
