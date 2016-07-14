@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="200dp"
+    android:paddingLeft="10dp"
+    android:layout_height="match_parent">
+    <ImageView
+        android:layout_width="wrap_content"
+        android:id="@+id/iv_arrow"
+        android:layout_height="wrap_content"
+        android:background="@mipmap/icon_circle_arrow"
+        android:layout_gravity="center_vertical"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:id="@+id/tv_hint"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="10dp"
+        android:textSize="13sp"
+        android:textColor="#666666"
+        android:layout_height="wrap_content"
+        android:text="@string/slide_info"></TextView>
+
+</LinearLayout>
